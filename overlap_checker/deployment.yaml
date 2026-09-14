@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: overlap-checker
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: overlap-checker
+
+  template:
+    metadata:
+      labels:
+        app: overlap-checker
+
+    spec:
+      containers:
+        - name: overlap-checker
+          image: overlap-checker:0.1
+          imagePullPolicy: IfNotPresent
+          containerPort: 8000
+
+          env:
+            - name: VALKEY_HOST
+              value: "valkey-svc:6379"
+
+            - name: DB_HOST
+              value: "postgres-svc"
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"

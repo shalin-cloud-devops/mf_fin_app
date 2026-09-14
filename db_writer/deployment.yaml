@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: db-writer
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: db-writer
+
+  template:
+    metadata:
+      labels:
+        app: db-writer
+
+    spec:
+      containers:
+        - name: db-writer
+          image: db-writer:0.1
+          imagePullPolicy: IfNotPresent
+
+          env:
+            - name: KAFKA_BROKER
+              value: "kafka-svc:9092"
+
+            - name: DB_HOST
+              value: "postgres-svc"
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
