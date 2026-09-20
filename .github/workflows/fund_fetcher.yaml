@@ -57,8 +57,24 @@ jobs:
             - name: "Set up Snyk CLI"
               uses: snyk/actions/setup@master
 
-            - name: "Snyk Monitor (Upload to Snyk UI)"
-              run: snyk monitor --file=requirements.txt
-
             - name: "Snyk Dependency Scan"
               run: snyk test --severity-threshold=high --file=requirements.txt
+
+            - name: "Docker setup - fund_fetcher"
+              uses: docker/setup-buildx-action@v3
+
+            - name: "Docker build - fund_fetcher"
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./fund_fetcher
+                  file: ./fund_fetcher/Dockerfile
+                  push: false
+                  load: true
+                  tags: 514005485562.dkr.ecr.us-east-1.amazonaws.com/fund-fetcher:1.0.0
+
+            - name: "Trivy Vulnerability Scanner"
+              uses: aquasecurity/trivy-action@master
+              with:
+                  image-ref: "514005485562.dkr.ecr.us-east-1.amazonaws.com/fund-fetcher:1.0.0"
+                  exit-code: "1"
+                  severity: "CRITICAL,HIGH"
