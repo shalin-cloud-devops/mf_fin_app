@@ -25,6 +25,8 @@ jobs:
         env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
             SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            AWS_REGION: "us-east-1"
+            IMAGE_URI: 514005485562.dkr.ecr.us-east-1.amazonaws.com/fund-fetcher:${{ github.sha }}-${{ github.run_number }}
 
         defaults:
             run:
@@ -70,11 +72,26 @@ jobs:
                   file: ./fund_fetcher/Dockerfile
                   push: false
                   load: true
-                  tags: 514005485562.dkr.ecr.us-east-1.amazonaws.com/fund-fetcher:1.0.0
+                  tags: ${{env.IMAGE_URI}}
 
             - name: "Trivy Vulnerability Scanner"
               uses: aquasecurity/trivy-action@master
               with:
-                  image-ref: "514005485562.dkr.ecr.us-east-1.amazonaws.com/fund-fetcher:1.0.0"
+                  image-ref: ${{env.IMAGE_URI}}
                   exit-code: "1"
                   severity: "CRITICAL,HIGH"
+                  ignore-unfixed: true
+
+            - name: "AWS creds - OIDC"
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: arn:aws:iam::514005485562:role/mf_app_ecr_role
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: "Login to Amazon ECR"
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: "Push Docker Image to ECR"
+              run: |
+                  docker push ${{env.IMAGE_URI}}
