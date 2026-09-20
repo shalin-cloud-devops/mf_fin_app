@@ -44,3 +44,10 @@ jobs:
                       -Dsonar.sources=fund_fetcher
                       -Dsonar.exclusions=**/deployment.yaml
                       -Dsonar.qualitygate.wait=true
+
+            - name: "Snyk Dependency Scan"
+              uses: snyk/actions/python-3.9@master
+              env:
+                  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+                  with:
+                  args: --severity-threshold=high --file=fund_fetcher/requirements.txt
