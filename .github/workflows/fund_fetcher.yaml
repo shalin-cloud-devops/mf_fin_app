@@ -24,6 +24,7 @@ jobs:
 
         env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
         defaults:
             run:
@@ -45,9 +46,19 @@ jobs:
                       -Dsonar.exclusions=**/deployment.yaml
                       -Dsonar.qualitygate.wait=true
 
-            - name: "Snyk Dependency Scan"
-              uses: snyk/actions/python@master
-              env:
-                  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            - name: "Install Python"
+              uses: actions/setup-python@v5
               with:
-                  args: --severity-threshold=high --file=fund_fetcher/requirements.txt
+                  python-version: 3.12
+
+            - name: "Install Dependecies - fund_fetcher"
+              run: pip install -r requirements.txt
+
+            - name: "Set up Snyk CLI"
+              uses: snyk/actions/setup@master
+
+            - name: "Snyk Monitor (Upload to Snyk UI)"
+              run: snyk monitor --file=requirements.txt
+
+            - name: "Snyk Dependency Scan"
+              run: snyk test --severity-threshold=high --file=requirements.txt
