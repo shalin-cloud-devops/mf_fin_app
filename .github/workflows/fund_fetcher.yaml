@@ -1,0 +1,45 @@
+name: "Build for the Fund fetcher svc"
+
+on:
+    push:
+        paths:
+            - "fund_fetcher/**"
+    pull_request:
+        branches:
+            - main
+            - release*
+        paths:
+            - "fund_fetcher/**"
+    workflow_dispatch:
+
+permissions:
+    id-token: write
+    contents: read
+    pull-requests: write
+
+jobs:
+    fund-fetcher-build:
+        name: "Build fund-fetcher-svc"
+        runs-on: ubuntu-latest
+
+        env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+        defaults:
+            run:
+                working-directory: ./fund_fetcher
+
+        steps:
+            - name: "Checkout Code"
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: "SonarQube Scan"
+              uses: sonarsource/sonarqube-scan-action@v6
+              with:
+                  args: >
+                      -Dsonar.organization=shalin-cloud-devops
+                      -Dsonar.projectKey=shalin-cloud-devops_fund_fetcher
+                      -Dsonar.sources=fund_fetcher
+                      -Dsonar.qualitygate.wait=true
