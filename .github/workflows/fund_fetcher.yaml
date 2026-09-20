@@ -46,8 +46,8 @@ jobs:
                       -Dsonar.qualitygate.wait=true
 
             - name: "Snyk Dependency Scan"
-              uses: snyk/actions/python-3.9@master
+              uses: snyk/actions/python@master
               env:
                   SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-                  with:
+              with:
                   args: --severity-threshold=high --file=fund_fetcher/requirements.txt
