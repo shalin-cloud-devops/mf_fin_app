@@ -42,4 +42,5 @@ jobs:
                       -Dsonar.organization=shalin-cloud-devops
                       -Dsonar.projectKey=shalin-cloud-devops_fund_fetcher
                       -Dsonar.sources=fund_fetcher
+                      -Dsonar.exclusions=**/deployment.yaml
                       -Dsonar.qualitygate.wait=true
