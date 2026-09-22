@@ -1,0 +1,37 @@
+{{- if .Values.cronjob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.cronjob.app_name }}
+  labels:
+    {{- toYaml .Values.cronjob.labels | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  concurrencyPolicy: {{ .Values.cronjob.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.cronjob.backoffLimit }}
+      template:
+        spec:
+          restartPolicy: {{ .Values.cronjob.restartPolicy }}
+          containers:
+            - name: {{ .Chart.Name }}-cron-container
+              image: "{{ .Values.cronjob.image.repository }}:{{ .Values.cronjob.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.cronjob.image.pullPolicy }}
+              {{- if .Values.cronjob.command }}
+              command:
+                {{- toYaml .Values.cronjob.command | nindent 16 }}
+              {{- end }}
+              {{- if .Values.cronjob.args }}
+              args:
+                {{- toYaml .Values.cronjob.args | nindent 16 }}
+              {{- end }}
+              resources:
+                {{- toYaml .Values.cronjob.resources | nindent 16 }}
+              {{- if .Values.cronjob.env }}
+              env:
+                {{- toYaml .Values.cronjob.env | nindent 16 }}
+              {{- end }}
+{{- end -}}

@@ -1,0 +1,29 @@
+cronjob:
+  enabled: true
+  schedule: "0 12 1 * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  restartPolicy: Never
+  backoffLimit: 2
+  app_name: fund-fetcher
+  labels:
+    app: fund-fetcher
+    role: kafka-producer
+
+  image:
+    repository: "514005485562.dkr.ecr.us-east-1.amazonaws.com/fund-fetcher"
+    pullPolicy: IfNotPresent
+    tag: "7fe791834c1a7ccdd3ea4173bbd3820ebb1ce462-8"
+
+  env:
+    - name: ENVIRONMENT
+      value: "production"
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
