@@ -1,0 +1,97 @@
+name: "Overlap Checker - Build"
+
+on:
+    push:
+        paths:
+            - "overlap_checker/**"
+    pull_request:
+        branches:
+            - main
+            - release*
+        paths:
+            - "overlap_checker/**"
+    workflow_dispatch:
+
+permissions:
+    id-token: write
+    contents: read
+    pull-requests: write
+
+jobs:
+    overlap-checker-build:
+        name: "Overlap-Checker-svc"
+        runs-on: ubuntu-latest
+
+        env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            AWS_REGION: "us-east-1"
+            IMAGE_URI: 514005485562.dkr.ecr.us-east-1.amazonaws.com/overlap-checker:${{ github.sha }}-${{ github.run_number }}
+
+        defaults:
+            run:
+                working-directory: overlap_checker
+
+        steps:
+            - name: "Checkout Code"
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: "SonarQube Scan"
+              uses: sonarsource/sonarqube-scan-action@v6
+              with:
+                  args: >
+                      -Dsonar.organization=shalin-cloud-devops
+                      -Dsonar.projectKey=shalin-cloud-devops_overlap_checker
+                      -Dsonar.sources=overlap_checker
+                      -Dsonar.exclusions=**/deployment.yaml
+                      -Dsonar.qualitygate.wait=true
+
+            - name: "Install Python - For Snyk scan"
+              uses: actions/setup-python@v5
+              with:
+                  python-version: 3.12
+
+            - name: "Install Dependecies - overlap_checker"
+              run: pip install -r requirements.txt
+
+            - name: "Set up Snyk CLI"
+              uses: snyk/actions/setup@master
+
+            - name: "Snyk Dependency Scan"
+              run: snyk test --severity-threshold=high --file=requirements.txt
+
+            - name: "Docker setup - overlap_checker"
+              uses: docker/setup-buildx-action@v3
+
+            - name: "Docker build - overlap_checker"
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./overlap_checker
+                  file: ./overlap_checker/Dockerfile
+                  push: false
+                  load: true
+                  tags: ${{env.IMAGE_URI}}
+
+            - name: "Trivy Vulnerability Scanner"
+              uses: aquasecurity/trivy-action@master
+              with:
+                  image-ref: ${{env.IMAGE_URI}}
+                  exit-code: "1"
+                  severity: "CRITICAL,HIGH"
+                  ignore-unfixed: true
+
+            - name: "AWS creds - OIDC"
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: arn:aws:iam::514005485562:role/mf_app_ecr_role
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: "Login to Amazon ECR"
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: "Push Docker Image to ECR"
+              run: |
+                  docker push ${{env.IMAGE_URI}}

@@ -1,0 +1,23 @@
+deployment:
+  restartPolicy: Always
+  app_name: db-writer
+  labels:
+    app: db-writer
+    role: kafka-consumer
+
+  image:
+    repository: "514005485562.dkr.ecr.us-east-1.amazonaws.com/db-writer"
+    pullPolicy: IfNotPresent
+    tag: "15bfdd928f888c3101885d1e1a4ea95743f3575a-4"
+
+  env:
+    - name: ENVIRONMENT
+      value: "production"
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi

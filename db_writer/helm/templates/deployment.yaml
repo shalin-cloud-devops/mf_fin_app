@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.app_name }}
+  labels: {{- toYaml .Values.deployment.labels | nindent 4 }}
+  
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:   {{ .Values.deployment.labels.app }}
+
+  template:
+    metadata:
+      labels: {{- toYaml .Values.deployment.labels | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Values.deployment.app_name }}
+          image: "{{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          env:
+            {{- toYaml .Values.deployment.env | nindent 12 }}
+          resources:
+            {{- toYaml .Values.deployment.resources | nindent 12 }}
