@@ -1,0 +1,99 @@
+name: "DB Writer - Build"
+
+on:
+    push:
+        paths:
+            - "db_writer/**"
+    pull_request:
+        branches:
+            - main
+        paths:
+            - "db_writer/**"
+    workflow_dispatch:
+
+permissions:
+    id-token: write
+    contents: read
+    pull-requests: write
+
+jobs:
+    db-writer-build:
+        name: "DB Writer - Build"
+        runs-on: ubuntu-latest
+
+        env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            AWS_REGION: "us-east-1"
+            IMAGE_URI: 514005485562.dkr.ecr.us-east-1.amazonaws.com/db-writer:${{ github.sha }}-${{ github.run_number }}
+
+        defaults:
+            run:
+                working-directory: db_writer
+
+        steps:
+            - name: "Checkout"
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: "SonarQube Scan"
+              uses: sonarsource/sonarqube-scan-action@v6
+              with:
+                  args: >
+                      -Dsonar.organization=shalin-cloud-devops
+                      -Dsonar.projectKey=shalin-cloud-devops_db_writer
+                      -Dsonar.sources=db_writer
+                      -Dsonar.exclusions=**/deployment.yaml
+                      -Dsonar.qualitygate.wait=true
+
+            - name: "Install Python"
+              uses: actions/setup-python@v5
+              with:
+                  python-version: 3.12
+
+            - name: "Install Dependencies - db_writer"
+              run: pip install -r requirements.txt
+
+            - name: "Setup Snyk on build agent"
+              uses: snyk/actions/setup@master
+
+            - name: "Snyk Dependency Scan"
+              run: snyk test --severity-threshold=high --file=requirements.txt
+
+            - name: "Docker setup on Build Agent"
+              uses: docker/setup-buildx-action@v3
+
+            - name: "Docker Build and Push"
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./db_writer
+                  file: ./db_writer/Dockerfile
+                  push: false
+                  load: true
+                  tags: ${{env.IMAGE_URI}}
+
+            - name: "Trivy - Image scan"
+              uses: aquasecurity/trivy-action@master
+              with:
+                  image-ref: ${{env.IMAGE_URI}}
+                  exit-code: "1"
+                  severity: "CRITICAL,HIGH"
+                  ignore-unfixed: true
+
+            - name: "AWS creds - OIDC"
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: arn:aws:iam::514005485562:role/mf_app_ecr_role
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: "Login to Amazon ECR"
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: "Push Docker Image to ECR"
+              if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+              run: |
+                  docker push ${{env.IMAGE_URI}}
