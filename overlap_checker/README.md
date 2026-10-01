@@ -1,0 +1,3 @@
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=shalin-cloud-devops_overlap_checker)](https://sonarcloud.io/summary/new_code?id=shalin-cloud-devops_overlap_checker)
+
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=shalin-cloud-devops_overlap_checker&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=shalin-cloud-devops_overlap_checker)
