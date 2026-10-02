@@ -1,0 +1,39 @@
+deployment:
+  restartPolicy: Always
+  app_name: overlap-checker
+  labels:
+    app: overlap-checker
+    role: api-endpoint
+  replicaCount: 3
+  containerPort: 8000
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  image:
+    repository: "514005485562.dkr.ecr.us-east-1.amazonaws.com/overlap-checker"
+    pullPolicy: IfNotPresent
+    tag: "572e96165902f055844d8e00a703aae562f0a5a3-4"
+
+  env:
+    - name: ENVIRONMENT
+      value: "production"
+
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+service:
+  svc_name: overlap-checker-svc
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  selector:
+    app: overlap-checker
