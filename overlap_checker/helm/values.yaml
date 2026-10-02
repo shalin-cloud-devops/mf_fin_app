@@ -3,7 +3,7 @@ deployment:
   app_name: overlap-checker
   labels:
     app: overlap-checker
-    role: api-endpoint
+    role: API-endpoint
   replicaCount: 3
   containerPort: 8000
 
@@ -16,7 +16,7 @@ deployment:
   image:
     repository: "514005485562.dkr.ecr.us-east-1.amazonaws.com/overlap-checker"
     pullPolicy: IfNotPresent
-    tag: "572e96165902f055844d8e00a703aae562f0a5a3-4"
+    tag: "92003444f059741d6f018f79b299ea0ceedf3a49-7"
 
   env:
     - name: ENVIRONMENT
@@ -33,7 +33,7 @@ deployment:
 service:
   svc_name: overlap-checker-svc
   type: ClusterIP
-  port: 8000
+  port: 80
   targetPort: 8000
   selector:
     app: overlap-checker
