@@ -61,7 +61,7 @@ jobs:
             -Dsonar.organization=shalin-cloud-devops
             -Dsonar.projectKey=shalin-cloud-devops_overlap_checker
             -Dsonar.sources=overlap_checker
-            -Dsonar.exclusions=**/deployment.yaml
+            -Dsonar.exclusions=**/deployment.yaml,**/test_*.py
             -Dsonar.python.coverage.reportPaths=overlap_checker/coverage.xml
             -Dsonar.qualitygate.wait=true
             -Dsonar.tests=overlap_checker/test_overlap_checker.py
